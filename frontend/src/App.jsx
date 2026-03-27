@@ -6,6 +6,7 @@ import DocumentAnalysis from './pages/DocumentAnalysis'
 import AIChat from './pages/AIChat'
 import History from './pages/History'
 import Sidebar from './components/Sidebar'
+console.log("hello world")
 
 function App() {
   return (
