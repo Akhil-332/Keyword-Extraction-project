@@ -191,7 +191,8 @@ const DocumentAnalysis = () => {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="h-full overflow-y-auto custom-scrollbar p-8">
+      <div className="max-w-7xl mx-auto pb-10">
       <div className="flex justify-between items-center mb-10">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/dashboard')} className="text-slate-500 hover:text-white transition-colors">
@@ -249,6 +250,29 @@ const DocumentAnalysis = () => {
                       {doc.summary_detailed}
                     </p>
                   </div>
+
+                  <div className="pt-6 border-t border-emerald-900/30">
+                    <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+                      <Hash size={16} className="text-emerald-400" /> Key Insights & Major Takeaways
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {doc.key_points ? (
+                        doc.key_points.split("||").map((point, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="p-4 bg-emerald-900/5 border border-emerald-900/20 rounded-2xl text-sm text-slate-300 leading-relaxed hover:border-emerald-500/30 hover:bg-emerald-900/10 transition-all font-medium"
+                          >
+                            <span className="text-emerald-400 font-bold mr-2">{i + 1}.</span> {point}
+                          </motion.div>
+                        ))
+                      ) : (
+                        <div className="text-slate-500 italic text-sm">No specific points extracted yet.</div>
+                      )}
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -302,28 +326,6 @@ const DocumentAnalysis = () => {
 
         {/* Right Column: Tags & Info */}
         <div className="space-y-8">
-          <div className="bg-[#0d1410] border border-emerald-900/40 rounded-3xl p-8">
-            <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-              <Hash size={16} className="text-emerald-400" /> Key Insights
-            </h4>
-            <div className="space-y-4">
-              {doc.key_points ? (
-                doc.key_points.split("||").map((point, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="p-4 bg-emerald-900/10 border border-emerald-900/30 rounded-2xl text-sm text-slate-300 leading-relaxed hover:border-emerald-500/30 hover:bg-emerald-900/20 transition-all"
-                  >
-                    <span className="text-emerald-400 font-bold mr-2">{i + 1}.</span> {point}
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-slate-500 italic text-sm">No specific points extracted yet. Try re-uploading the document.</div>
-              )}
-            </div>
-          </div>
 
           <div className="bg-[#0d1410] border border-emerald-900/40 rounded-3xl p-8">
             <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6">Keywords</h4>
@@ -339,13 +341,14 @@ const DocumentAnalysis = () => {
           <div className="bg-gradient-to-br from-emerald-900/40 to-violet-900/40 border border-emerald-500/30 rounded-3xl p-8">
             <h4 className="font-bold text-emerald-300 mb-2 underline uppercase tracking-tighter">AI Focus Area</h4>
             <p className="text-emerald-100/80 leading-relaxed italic">
-              "This document primarily centers around <span className="text-violet-400 font-bold">{(doc.topics || "").split(", ")[0]}</span> and its related implications."
+              "This document primarily centers around <span className="text-violet-400 font-bold">{ (doc.topics || "").split(", ")[0] || "Advanced Systems Analysis" }</span> and its related implications."
             </p>
           </div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default DocumentAnalysis;

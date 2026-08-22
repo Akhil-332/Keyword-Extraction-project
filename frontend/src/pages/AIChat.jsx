@@ -23,9 +23,9 @@ const AIChat = () => {
           const res = await axios.get(`http://localhost:8000/documents/${docId}`);
           setDoc(res.data);
           setMessages([
-            { 
-              role: 'bot', 
-              text: `Hello! I've analyzed your document: '${res.data.filename}'. You can ask me anything about its content, such as 'What are the main risks?' or 'Summarize the document'.` 
+            {
+              role: 'bot',
+              text: `Hello! I've analyzed your document: '${res.data.filename}'. You can ask me anything about its content, such as 'What are the main risks?' or 'Summarize the document'.`
             }
           ]);
         } catch (err) {
@@ -53,27 +53,27 @@ const AIChat = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isTyping || !doc) return;
-    
+
     const userMsg = { role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
-    
+
     try {
       const res = await axios.post('http://localhost:8000/chat', {
         doc_id: doc.id,
         query: input
       });
-      
-      setMessages(prev => [...prev, { 
-        role: 'bot', 
-        text: res.data.answer 
+
+      setMessages(prev => [...prev, {
+        role: 'bot',
+        text: res.data.answer
       }]);
     } catch (err) {
       console.error("Chat error:", err);
-      setMessages(prev => [...prev, { 
-        role: 'bot', 
-        text: "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later." 
+      setMessages(prev => [...prev, {
+        role: 'bot',
+        text: "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later."
       }]);
     } finally {
       setIsTyping(false);
@@ -93,11 +93,11 @@ const AIChat = () => {
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-emerald-400 to-violet-400 bg-clip-text text-transparent italic">Select a Document to Chat</h1>
           <p className="text-slate-400 text-lg">Choose one of your recently analyzed documents to start an intelligent conversation.</p>
         </header>
-        
+
         <div className="flex-1 overflow-y-auto space-y-4 pr-4">
           {allDocs.length > 0 ? (
             allDocs.map((d) => (
-              <motion.div 
+              <motion.div
                 key={d.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -121,7 +121,7 @@ const AIChat = () => {
           ) : (
             <div className="text-center py-20 bg-[#0d1410]/30 rounded-3xl border border-emerald-900/30 border-dashed">
               <p className="text-slate-500">No documents found. Upload a document in the Dashboard first!</p>
-              <button 
+              <button
                 onClick={() => navigate('/dashboard')}
                 className="mt-6 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/20"
               >
@@ -135,7 +135,7 @@ const AIChat = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0f0d]">
+    <div className="flex flex-col h-full bg-[#0a0f0d] overflow-hidden">
       {/* Header */}
       <header className="p-6 border-b border-emerald-900/30 bg-[#0d1410] backdrop-blur-md flex justify-between items-center shrink-0">
         <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ const AIChat = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => navigate('/chat/new')}
             className="text-xs px-3 py-1.5 bg-[#0a0f0d] hover:bg-emerald-900/20 text-slate-300 rounded-lg transition-colors border border-emerald-900/40"
           >
@@ -167,20 +167,18 @@ const AIChat = () => {
       <div className="flex-1 overflow-y-auto p-8 space-y-8">
         <AnimatePresence>
           {messages.map((msg, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className={`flex items-start gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${
-                msg.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-[#0d1410] text-emerald-400 border border-emerald-900/40'
-              }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-[#0d1410] text-emerald-400 border border-emerald-900/40'
+                }`}>
                 {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
               </div>
-              <div className={`max-w-2xl px-6 py-4 rounded-3xl ${
-                msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-sm shadow-xl shadow-emerald-600/10' : 'bg-[#0d1410] border border-emerald-900/40 text-slate-200 rounded-tl-sm shadow-xl shadow-black/20'
-              }`}>
+              <div className={`max-w-2xl px-6 py-4 rounded-3xl ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-sm shadow-xl shadow-emerald-600/10' : 'bg-[#0d1410] border border-emerald-900/40 text-slate-200 rounded-tl-sm shadow-xl shadow-black/20'
+                }`}>
                 <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
               </div>
             </motion.div>
@@ -211,15 +209,15 @@ const AIChat = () => {
             <button className="text-slate-500 hover:text-emerald-400 transition-colors p-2">
               <Paperclip size={20} />
             </button>
-            <input 
-              type="text" 
-              placeholder="Ask a question about the document..." 
+            <input
+              type="text"
+              placeholder="Ask a question about the document..."
               className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-slate-200 px-4"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isTyping}
               className={`w-12 h-12 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl flex items-center justify-center transition-all shadow-lg active:scale-95 ${isTyping ? 'opacity-50 cursor-not-allowed' : ''}`}

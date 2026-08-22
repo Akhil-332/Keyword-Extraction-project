@@ -54,6 +54,9 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     if not content:
         content = "Could not extract text from the document."
 
+    # Clean text (remove headers, footers, boilerplate)
+    content = NLPEngine.clean_text(content)
+
     # Analyze
     keywords = NLPEngine.extract_keywords(content)
     topics = NLPEngine.detect_topics(content)
@@ -95,6 +98,12 @@ def delete_document(doc_id: int, db: Session = Depends(get_db)):
     db.delete(doc)
     db.commit()
     return {"message": "Document deleted successfully"}
+
+@app.api_route("/documents/clear", methods=["DELETE", "POST"])
+def clear_documents(db: Session = Depends(get_db)):
+    db.query(Document).delete()
+    db.commit()
+    return {"message": "All documents cleared successfully"}
 
 @app.post("/chat")
 async def chat_with_document(request: ChatRequest, db: Session = Depends(get_db)):

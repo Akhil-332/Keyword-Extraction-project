@@ -3,6 +3,7 @@ import json
 import PyPDF2
 from docx import Document as DocxDocument
 import io
+import re
 from config import settings
 
 # Configure Gemini
@@ -22,6 +23,33 @@ except Exception as e:
     use_gemini = False
 
 class NLPEngine:
+    @staticmethod
+    def clean_text(text: str):
+        if not text: return ""
+        
+        # Hard-coded strings to remove (Reported by user)
+        forbidden_strings = ["GiriRajS.K", "DeptofCSE", "(R-23)", "1UNIT-4", "[Type text]"]
+        for s in forbidden_strings:
+            text = text.replace(s, " ")
+
+        # Broader patterns for academic headers/footers
+        patterns = [
+            r'Page \d+', 
+            r'Dept\s*of\s*[A-Z]+', 
+            r'UNIT[- –]*\d+', 
+            r'\(R-\d+\)', 
+            r'[A-Z][a-z]+[A-Z][a-z]+\.[A-Z]', # GiriRajS.K
+            r'\n\s*UNIT.*?\d+', # Lines starting with UNIT
+            r'\n\s*\d+\.\d+.*?\n', # Potential header numbers
+            r'\n\s*\n', # Excessive newlines
+        ]
+        for pattern in patterns:
+            text = re.sub(pattern, ' ', text, flags=re.IGNORECASE)
+        
+        # Final cleanup
+        text = re.sub(r' +', ' ', text)
+        return text.strip()
+
     @staticmethod
     def extract_text_from_pdf(file_bytes):
         try:
@@ -49,7 +77,14 @@ class NLPEngine:
         if not text: return []
         if use_gemini:
             try:
-                prompt = f"Extract the top 15 most important keywords and key phrases from this text. Return them ONLY as a comma-separated list of short strings (1-3 words each).\n\nText: {text[:8000]}"
+                prompt = f"""
+                Extract the top 15 most important keywords and key phrases from this text. 
+                STRICTLY IGNORE all document boilerplate, student names (e.g. GiriRaj), department names (e.g. DeptofCSE), course codes (R-23), unit numbers (UNIT-4), headers, footers, and page numbers. 
+                Focus ONLY on the core subject matter.
+                Return them ONLY as a comma-separated list of short strings (1-3 words each).
+
+                Text: {text[:8000]}
+                """
                 response = model.generate_content(prompt)
                 keywords = response.text.strip().split(", ")
                 return [k.strip() for k in keywords if k.strip()][:15]
@@ -65,7 +100,15 @@ class NLPEngine:
         if not text: return []
         if use_gemini:
             try:
-                prompt = f"Extract exactly {num_points} key points from this document in CHRONOLOGICAL order. Focus on the most important facts. Return them ONLY as a bulleted list starting with '1. ', '2. ', etc.\n\nText: {text[:15000]}"
+                prompt = f"""
+                Extract exactly {num_points} key points from this document in CHRONOLOGICAL order. 
+                Focus on the most important facts. 
+                STRICTLY IGNORE all document boilerplate, student names, department names, course codes, unit numbers, headers, footers, and page numbers. 
+                Focus ONLY on the core subject matter.
+                Return them ONLY as a bulleted list starting with '1. ', '2. ', etc.
+
+                Text: {text[:15000]}
+                """
                 response = model.generate_content(prompt)
                 lines = response.text.strip().split("\n")
                 points = [l.split(". ", 1)[1] if ". " in l else l for l in lines if l.strip()]
@@ -82,20 +125,49 @@ class NLPEngine:
         if not text: return []
         if use_gemini:
             try:
-                prompt = f"Identify the top 8 main topics or categories discussed in this text. Return them ONLY as a comma-separated list of short phrases.\n\nText: {text[:8000]}"
+                prompt = f"""
+                Identify 5-8 specific technical or thematic topics discussed in this text. 
+                STRICTLY IGNORE all document boilerplate, student names, department names, course codes, unit numbers, headers, footers, and page numbers. 
+                Focus ONLY on the core subject matter.
+                Return them ONLY as a comma-separated list of 1-3 word phrases.
+                Example output: 'Memory Management, Operating Systems, Paging, Virtual Memory'
+
+                Text: {text[:8000]}
+                """
                 response = model.generate_content(prompt)
                 topics = response.text.strip().split(", ")
-                return [t.strip() for t in topics if t.strip()][:8]
+                filtered = [t.strip() for t in topics if t.strip() and len(t) > 2]
+                return filtered[:8] if filtered else ["Technical Analysis"]
             except:
                 pass
-        return ["General"]
+        return ["Technical Analysis"]
 
     @staticmethod
     def generate_summary(text: str, max_length: int = 400):
         if not text: return "No text provided for summary."
         if use_gemini:
             try:
-                prompt = f"Provide a concise and professional summary of this document (max {max_length} characters). Give an executive overview.\n\nText: {text[:15000]}"
+                # ULTRA STRICT AGENTIC PROMPT
+                prompt = f"""
+                You are a Senior Strategic Analyst for DocInsight AI. 
+                Your reputation depends on providing pure, professional summaries of technical documents.
+
+                TARGET CONTENT:
+                {text[:15000]}
+
+                TASK:
+                Provide a high-level Executive Overview (max {max_length} characters).
+
+                ZERO-TOLERANCE RULES (MANDATORY):
+                1. DO NOT mention ANY person names (e.g., 'GiriRaj').
+                2. DO NOT mention ANY department names (e.g., 'DeptofCSE').
+                3. DO NOT mention ANY unit numbers (e.g., 'UNIT-4').
+                4. DO NOT mention ANY course versions or codes (e.g., 'R-23').
+                5. DO NOT mention 'Page X' or '[Type text]'.
+                
+                YOUR OUTPUT MUST START DIRECTLY WITH THE CORE SUBJECT MATTER. 
+                If you find any names or academic headers in the source, STRIP THEM OUT COMPLETELY.
+                """
                 response = model.generate_content(prompt)
                 return response.text.strip()
             except:
